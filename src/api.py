@@ -41,6 +41,12 @@ def recommend(request: QueryRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+from fastapi.responses import FileResponse
+
+@app.get("/")
+async def read_index():
+    return FileResponse('frontend/index.html')
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8085))
     uvicorn.run(app, host="0.0.0.0", port=port)

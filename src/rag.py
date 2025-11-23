@@ -130,18 +130,14 @@ class RecommendationEngine:
                 "duration": duration,
                 "remote_support": "Yes", # Default for SHL online assessments
                 "test_type": item.get('test_type', []),
-                "_score": normalized_score # Internal score for sorting
+                "score": normalized_score # Match score (0-100)
             })
             
         # Sort by Cross-Encoder score
-        final_results.sort(key=lambda x: x['_score'], reverse=True)
+        final_results.sort(key=lambda x: x['score'], reverse=True)
         
         # Apply intelligent balancing (modified to work with new structure)
         balanced_results = self._balance_recommendations(query, final_results, k)
-        
-        # Remove internal score before returning
-        for res in balanced_results:
-            res.pop('_score', None)
             
         return {"recommended_assessments": balanced_results}
     

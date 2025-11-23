@@ -201,10 +201,11 @@
                         card.innerHTML = `
                             <div>
                                 <a href="${item.url}" target="_blank" class="result-title">${item.name}</a>
-                                <span class="result-score">Duration: ${item.duration} min</span>
+                                <span class="result-score">Match: ${item.score.toFixed(1)}%</span>
                             </div>
                             <div class="result-desc">${item.description}</div>
                             <div style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                                <strong>Duration:</strong> ${item.duration} min | 
                                 <strong>Type:</strong> ${item.test_type.join(', ')} | 
                                 <strong>Remote:</strong> ${item.remote_support} | 
                                 <strong>Adaptive:</strong> ${item.adaptive_support}

@@ -169,33 +169,46 @@
             resultsDiv.style.display = 'none';
             resultsList.innerHTML = '';
 
+            // Add timeout for cold starts (60 seconds)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+
             try {
                 const response = await fetch('/recommend', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ query: query })
+                    body: JSON.stringify({ query: query }),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId);
+
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
+                const assessments = data.recommended_assessments || [];
 
-                if (data.length === 0) {
+                if (assessments.length === 0) {
                     resultsList.innerHTML = '<p>No recommendations found.</p>';
                 } else {
-                    data.forEach(item => {
+                    assessments.forEach(item => {
                         const card = document.createElement('div');
                         card.className = 'result-card';
                         card.innerHTML = `
                             <div>
-                                <a href="${item.URL}" target="_blank" class="result-title">${item['Assessment name']}</a>
-                                <span class="result-score">Match: ${item.Score.toFixed(1)}%</span>
+                                <a href="${item.url}" target="_blank" class="result-title">${item.name}</a>
+                                <span class="result-score">Duration: ${item.duration} min</span>
                             </div>
-                            <div class="result-desc">${item.Description}</div>
+                            <div class="result-desc">${item.description}</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #666;">
+                                <strong>Type:</strong> ${item.test_type.join(', ')} | 
+                                <strong>Remote:</strong> ${item.remote_support} | 
+                                <strong>Adaptive:</strong> ${item.adaptive_support}
+                            </div>
                         `;
                         resultsList.appendChild(card);
                     });
@@ -203,7 +216,11 @@
                 resultsDiv.style.display = 'block';
             } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred while fetching recommendations. Make sure the API is running.');
+                if (error.name === 'AbortError') {
+                    alert('Request timed out. The server may be starting up (this can take 60 seconds on first use). Please try again.');
+                } else {
+                    alert(`Error: ${error.message}. Please ensure the API is running and try again.`);
+                }
             } finally {
                 btn.disabled = false;
                 loading.style.display = 'none';

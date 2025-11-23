@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific - ignore dataset and predictions, but allow assessments.json
+Gen_AI*.xlsx
+submission_predictions.csv
+*.pdf
+
+# Models (too large for git)
+models/
+checkpoints/

@@ -102,7 +102,8 @@ class RecommendationEngine:
         max_score = float(np.max(cross_scores))
         score_range = max_score - min_score
         
-        reranked_results = []
+        # Format results to match API requirements
+        final_results = []
         for i, idx in enumerate(top_indices):
             item = self.assessments[idx]
             # Normalize to 0-100 range
@@ -110,27 +111,39 @@ class RecommendationEngine:
             if score_range > 0:
                 normalized_score = ((raw_score - min_score) / score_range) * 100
             else:
-                normalized_score = 50.0  # Default if all scores are the same
+                normalized_score = 50.0
             
-            reranked_results.append({
-                "Assessment name": item['name'],
-                "URL": item['url'],
-                "Score": normalized_score,  # Normalized 0-100 score for display
-                "Raw Score": raw_score,  # Keep raw score for debugging
-                "Hybrid Score": float(hybrid_scores[idx]),
-                "Description": item.get('description', '')[:200] + "...",
-                "Test Type": item.get('test_type', [])
+            # Infer missing fields
+            description = item.get('description', '')
+            is_adaptive = "Yes" if "adaptive" in description.lower() or "adaptive" in item['name'].lower() else "No"
+            
+            # Try to extract duration from description, default to 30
+            import re
+            duration_match = re.search(r'(\d+)\s*min', description.lower())
+            duration = int(duration_match.group(1)) if duration_match else 30
+            
+            final_results.append({
+                "url": item['url'],
+                "name": item['name'],
+                "adaptive_support": is_adaptive,
+                "description": description,
+                "duration": duration,
+                "remote_support": "Yes", # Default for SHL online assessments
+                "test_type": item.get('test_type', []),
+                "_score": normalized_score # Internal score for sorting
             })
             
         # Sort by Cross-Encoder score
-        reranked_results.sort(key=lambda x: x['Score'], reverse=True)
+        final_results.sort(key=lambda x: x['_score'], reverse=True)
         
-        results = reranked_results
+        # Apply intelligent balancing (modified to work with new structure)
+        balanced_results = self._balance_recommendations(query, final_results, k)
         
-        # Apply intelligent balancing
-        results = self._balance_recommendations(query, results, k)
-        
-        return results
+        # Remove internal score before returning
+        for res in balanced_results:
+            res.pop('_score', None)
+            
+        return {"recommended_assessments": balanced_results}
     
     def _balance_recommendations(self, query, results, k):
         """Balance recommendations when query spans multiple domains"""
@@ -148,20 +161,20 @@ class RecommendationEngine:
         # Filter by Test Type if query is specific
         if has_technical and not has_soft:
             # Prefer K, C, A types for technical queries
-            tech_results = [r for r in results if any(t in ['K', 'C', 'A'] for t in r.get('Test Type', []))]
+            tech_results = [r for r in results if any(t in ['K', 'C', 'A'] for t in r.get('test_type', []))]
             if len(tech_results) >= k:
                 return tech_results[:k]
         
         elif has_soft and not has_technical:
             # Prefer P, B types for soft skill queries
-            soft_results = [r for r in results if any(t in ['P', 'B'] for t in r.get('Test Type', []))]
+            soft_results = [r for r in results if any(t in ['P', 'B'] for t in r.get('test_type', []))]
             if len(soft_results) >= k:
                 return soft_results[:k]
         
         # If query spans both domains, ensure balanced mix
         elif has_technical and has_soft:
-            knowledge_tests = [r for r in results if 'K' in r.get('Test Type', [])]
-            personality_tests = [r for r in results if 'P' in r.get('Test Type', [])]
+            knowledge_tests = [r for r in results if 'K' in r.get('test_type', [])]
+            personality_tests = [r for r in results if 'P' in r.get('test_type', [])]
             
             target_k = min(len(knowledge_tests), k // 2)
             target_p = min(len(personality_tests), k // 2)
@@ -172,8 +185,8 @@ class RecommendationEngine:
             
             remaining_slots = k - len(balanced)
             if remaining_slots > 0:
-                used_urls = {r['URL'] for r in balanced}
-                remaining = [r for r in results if r['URL'] not in used_urls]
+                used_urls = {r['url'] for r in balanced}
+                remaining = [r for r in results if r['url'] not in used_urls]
                 balanced.extend(remaining[:remaining_slots])
             
             return balanced[:k]

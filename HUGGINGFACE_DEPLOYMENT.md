@@ -20,7 +20,7 @@
 
 ```bash
 # Navigate to your project
-cd /Users/shobhitagarwal/Desktop/SHL-assignment.
+cd /Users/shravyagautam/Desktop/SHL-assignment.
 
 # Add Hugging Face as a remote (replace USERNAME with your HF username)
 git remote add hf https://huggingface.co/spaces/USERNAME/shl-assessment-recommender

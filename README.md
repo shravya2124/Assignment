@@ -19,22 +19,72 @@ An intelligent recommendation system that helps hiring managers find relevant SH
 - **Smart Balancing**: Intelligently balances Technical and Soft Skills assessments
 - **Mean Recall@10**: 24.1% on training set
 
+## Local Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://huggingface.co/spaces/shravyagautam24/SHL_Assignment
+   cd SHL_Assignment
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the application**
+   ```bash
+   python app.py
+   ```
+   The API will be available at `http://0.0.0.0:7860`.
+
 ## API Endpoints
 
-### Health Check
-```bash
-GET /health
+### 1. Health Check
+- **URL**: `/health`
+- **Method**: `GET`
+- **Description**: Verifies the API is running.
+
+**Response**:
+```json
+{
+  "status": "healthy"
+}
 ```
 
-### Get Recommendations
-```bash
-POST /recommend
-Content-Type: application/json
+### 2. Get Recommendations
+- **URL**: `/recommend`
+- **Method**: `POST`
+- **Description**: Returns relevant assessments based on a query.
 
+**Request**:
+```json
 {
   "query": "Java developer with communication skills"
 }
 ```
+
+**Response**:
+```json
+{
+  "recommended_assessments": [
+    {
+      "url": "https://www.shl.com/...",
+      "name": "Java Platform Enterprise Edition 7",
+      "adaptive_support": "No",
+      "description": "The Java Platform Enterprise Edition 7...",
+      "duration": 30,
+      "remote_support": "Yes",
+      "test_type": ["K"]
+    }
+  ]
+}
+```
+
+### 3. Frontend
+- **URL**: `/`
+- **Method**: `GET`
+- **Description**: Serves the web interface.
 
 ## Performance
 

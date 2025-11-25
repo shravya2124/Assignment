@@ -1,12 +1,3 @@
----
-title: SHL Assessment Recommender
-emoji: 🎯
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
-license: mit
----
 
 <div align="center">
 
